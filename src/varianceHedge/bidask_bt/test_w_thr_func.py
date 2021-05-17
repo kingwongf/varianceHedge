@@ -41,7 +41,7 @@ asks = asks[syms]
 
 def f_opt_w(w_threshold):
     hist_mid = pd.DataFrame(columns=syms)
-    hist_p = pd.DataFrame(columns=['MV', 'RP', 'MS', 'UW'])
+    hist_p = pd.DataFrame(columns=['MV', 'NRP', 'RP', 'MS', 'UW'])
     hist_w = {}
     hist_opt_w = {}
     hist_n = {}

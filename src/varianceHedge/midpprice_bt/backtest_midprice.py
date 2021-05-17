@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 from pypfopt.efficient_frontier import EfficientFrontier
+from src.varianceHedge.tools.op_w import compute_op_w
 from pypfopt.cla import CLA
 
 
@@ -13,32 +14,9 @@ init_port_val = 10000
 
 w_threshold = 0.20
 
-# dts = pd.date_range(start='11/1/2020', end='04/1/2021', freq='MS').strftime("%Y-%m-%d")
-dts = ['2021-04-01']
-class compute_op_w:
-    def compute_MV_weights(**kwargs):
-        inv_covar = np.linalg.inv(kwargs['cov'])
-        u = np.ones(len(kwargs['cov']))
-
-        return np.dot(inv_covar, u) / np.dot(u.T, np.dot(inv_covar, u))
-
-    # def compute_MS_weights(**kwargs):
-    #     inv_covar = np.linalg.inv(kwargs['cov'])
-    #     u = np.ones(len(kwargs['cov']))
-    #     return np.dot(inv_covar, kwargs['exp_ret']) / np.dot(u.T, np.dot(inv_covar, kwargs['exp_ret']))
-    @staticmethod
-    def _is_pos_def(x):
-        return np.all(np.linalg.eigvals(x) > 0)
-
-    def compute_RP_weights(**kwargs):
-        weights = (1 / np.diag(kwargs['cov']))
-        return weights / sum(weights)
-
-    def compute_UW_weights(**kwargs):
-        return [1/kwargs['cov'].shape[0]]*kwargs['cov'].shape[0]
-
-    def compute_MS_weights(**kwargs):
-        return pd.Series(CLA(kwargs['exp_ret'], kwargs['cov'], weight_bounds=(0, 1)).max_sharpe()).loc[kwargs['exp_ret'].index].values
+#
+dts = pd.date_range(start='11/1/2020', end='04/1/2021', freq='MS').strftime("%Y-%m-%d")
+# dts = ['2021-04-01']
 
 
 def apply_compute_MV_weights(covariances):
@@ -62,14 +40,14 @@ for month_dt in dts:
 
     # hist_mid = mids.loc[pd.to_datetime('2021-04-01 01:00:00')].to_frame().T
     hist_mid = pd.DataFrame(columns=syms)
-    hist_p = pd.DataFrame(columns=['MV', 'RP', 'MS', 'UW'])
+    hist_p = pd.DataFrame(columns=['MV','NRP', 'RP', 'MS', 'UW'])
     hist_w = {}
     hist_n = {}
     hist_opt_w ={}
 
 
     for dt, mid in mids.iterrows():
-        # print(f"current dt: {dt}")
+        print(f"current dt: {dt}")
         ## Append Current Prices
         hist_mid.loc[dt] = mid
         for port in hist_p.columns:
@@ -110,7 +88,7 @@ for month_dt in dts:
             diff_w = (opt_w - hist_w[port].iloc[-1]).sort_values(ascending=True)
             prev_dt = hist_n[port].iloc[-1].name
 
-
+            print(f"{port} prev dt: {prev_dt}")
             ## TODO changed from mean to max
             if diff_w.abs().max() > w_threshold:
                 for sym, diff_w_i in diff_w.items():
@@ -130,39 +108,39 @@ for month_dt in dts:
     fig.write_image(f"results/bt_mid_{month_dt}.png")
     hist_p.to_pickle(f"results/bt_mid_{month_dt}.pkl")
 
-    hist_w_MV = hist_w['MV']
-    hist_opt_w_MV = hist_opt_w['MV']
-
-    print('hist_w_MV')
-    print(hist_w_MV)
-
-    print('hist_opt_w_MV')
-    hist_opt_w_MV = hist_opt_w_MV.shift(1).fillna(0)
-    print(hist_opt_w_MV)
-
-    hist_opt_w_MV.loc['2021-04-01 01:00:00'] = 0
-    hist_opt_port = ((hist_opt_w_MV * mids.pct_change()).loc['2021-04-01 01:00:00':].fillna(0).sum(
-        axis=1) + 1).cumprod() * init_port_val
-
-    print('apply_w_MV')
-    hist_cov = mids.pct_change().rolling('60min', min_periods=60).cov().dropna()
-    print('apply_cov')
-    print(hist_cov)
-    apply_w_MV = hist_cov.groupby(level=0, axis=0).apply(apply_compute_MV_weights).apply(pd.Series).dropna().shift(1)
-    apply_w_MV.columns = mids.columns
-    print(apply_w_MV)
-
-    hist_w_MV = hist_w_MV.shift(1).fillna(0)
-    mv_port = ((hist_w_MV * mids.pct_change()).loc['2021-04-01 01:00:00':].fillna(0).sum(axis=1) + 1).cumprod() * init_port_val
-
-    apply_w_MV.loc['2021-04-01 01:00:00'] = 0
-    apply_mv_port = ((apply_w_MV * mids.pct_change()).loc['2021-04-01 01:00:00':].fillna(0).sum(axis=1) + 1).cumprod() * init_port_val
-    print('apply_mv_port')
-    print(apply_mv_port)
-
-    compare_df = pd.concat([mv_port, hist_p['MV'], apply_mv_port.rename('apply_w_MV'), hist_opt_port.rename('hist_opt')], axis=1).rename(columns={0:'hist_w_MV'}).astype('float64')
-    print('compare_df')
-    print(compare_df)
+    # hist_w_MV = hist_w['MV']
+    # hist_opt_w_MV = hist_opt_w['MV']
+    #
+    # print('hist_w_MV')
+    # print(hist_w_MV)
+    #
+    # print('hist_opt_w_MV')
+    # hist_opt_w_MV = hist_opt_w_MV.shift(1).fillna(0)
+    # print(hist_opt_w_MV)
+    #
+    # hist_opt_w_MV.loc['2021-04-01 01:00:00'] = 0
+    # hist_opt_port = ((hist_opt_w_MV * mids.pct_change()).loc['2021-04-01 01:00:00':].fillna(0).sum(
+    #     axis=1) + 1).cumprod() * init_port_val
+    #
+    # print('apply_w_MV')
+    # hist_cov = mids.pct_change().rolling('60min', min_periods=60).cov().dropna()
+    # print('apply_cov')
+    # print(hist_cov)
+    # apply_w_MV = hist_cov.groupby(level=0, axis=0).apply(apply_compute_MV_weights).apply(pd.Series).dropna().shift(1)
+    # apply_w_MV.columns = mids.columns
+    # print(apply_w_MV)
+    #
+    # hist_w_MV = hist_w_MV.shift(1).fillna(0)
+    # mv_port = ((hist_w_MV * mids.pct_change()).loc['2021-04-01 01:00:00':].fillna(0).sum(axis=1) + 1).cumprod() * init_port_val
+    #
+    # apply_w_MV.loc['2021-04-01 01:00:00'] = 0
+    # apply_mv_port = ((apply_w_MV * mids.pct_change()).loc['2021-04-01 01:00:00':].fillna(0).sum(axis=1) + 1).cumprod() * init_port_val
+    # print('apply_mv_port')
+    # print(apply_mv_port)
+    #
+    # compare_df = pd.concat([mv_port, hist_p['MV'], apply_mv_port.rename('apply_w_MV'), hist_opt_port.rename('hist_opt')], axis=1).rename(columns={0:'hist_w_MV'}).astype('float64')
+    # print('compare_df')
+    # print(compare_df)
     #fig = compare_df.plot()
     #fig.show()
 
