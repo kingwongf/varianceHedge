@@ -57,7 +57,8 @@ for idt in tqdm(range(idt_st_bt, mids.shape[0])):
         if idt==idt_st_bt:
             # print('idt==idt_st_bt')
             # print(f"idt: {idt}")
-            sample_ret = np.diff(hist_mid[-price_sampling_size:], axis=0) / hist_mid[-price_sampling_size:][1:,:]
+
+            sample_ret = np.diff(hist_mid[-price_sampling_size:], axis=0) / hist_mid[-price_sampling_size:][:-1, :]
             sample_ret = sample_ret[:, ~np.isnan(sample_ret).all(axis=0)]
             sample_cov = np.cov(sample_ret, rowvar=False)
             exp_ret = sample_ret.mean(axis=0)
@@ -86,7 +87,8 @@ for idt in tqdm(range(idt_st_bt, mids.shape[0])):
         # print(f"port {port_name} curr_port_val")
         # print(hist_p[idt, iport])
 
-        sample_ret = np.diff(hist_mid[-price_sampling_size:], axis=0) / hist_mid[-price_sampling_size:][1:, :]
+
+        sample_ret = np.diff(hist_mid[-price_sampling_size:], axis=0) / hist_mid[-price_sampling_size:][:-1, :]
         sample_ret = sample_ret[:, ~np.isnan(sample_ret).all(axis=0)]
         sample_cov = np.cov(sample_ret, rowvar=False)
 
