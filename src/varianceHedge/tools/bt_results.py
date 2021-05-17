@@ -21,11 +21,15 @@ def _np_stats(np_equity_curves: np.array):
 
 
 
-    ret = np.diff(np_equity_curves, axis=0) / np_equity_curves[1:, :]
-    prnt('np rets')
+    ret = np.diff(np_equity_curves, axis=0) / np_equity_curves[:-1, :]
+    print('np rets')
     print(ret)
 
+    print('np mean rets')
     print(np.mean(ret, axis=0))
+
+
+
     np.std(ret, axis=0)
 
     skew(ret, axis=0)
@@ -53,6 +57,8 @@ def stats(df_equity_curves):
 
     print('pandas ret')
     print(df_equity_curves.pct_change())
+    print('mean pandas ret')
+    print(df_equity_curves.pct_change().mean())
 
     r = pd.concat([_stats(df_equity_curves[port]) for port in df_equity_curves], axis=1)
 

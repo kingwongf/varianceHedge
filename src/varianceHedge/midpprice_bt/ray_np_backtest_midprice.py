@@ -14,7 +14,8 @@ ray.init()
 init_port_val = 10000
 
 w_threshold = 0.20
-price_sampling_size = 121
+price_sampling_size = 61
+
 
 ports = ['MV','NRP', 'RP', 'MS', 'UW']
 
@@ -56,7 +57,7 @@ def bt(port):
                              mids[symbs_map.keys()].values[idt, :].reshape(1, -1),
                              axis=0)
         if idt == idt_st_bt:
-            sample_ret = np.diff(hist_mid[-price_sampling_size:], axis=0) / hist_mid[-price_sampling_size:][1:, :]
+            sample_ret = np.diff(hist_mid[-price_sampling_size:], axis=0) / hist_mid[-price_sampling_size:][:-1, :]
             sample_ret = sample_ret[:, ~np.isnan(sample_ret).all(axis=0)]
             sample_cov = np.cov(sample_ret, rowvar=False)
             exp_ret = sample_ret.mean(axis=0)
@@ -71,7 +72,7 @@ def bt(port):
         hist_p[idt] = curr_port_val
 
 
-        sample_ret = np.diff(hist_mid[-price_sampling_size:], axis=0) / hist_mid[-price_sampling_size:][1:, :]
+        sample_ret = np.diff(hist_mid[-price_sampling_size:], axis=0) / hist_mid[-price_sampling_size:][:-1, :]
         sample_ret = sample_ret[:, ~np.isnan(sample_ret).all(axis=0)]
         sample_cov = np.cov(sample_ret, rowvar=False)
         exp_ret = sample_ret.mean(axis=0)

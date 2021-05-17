@@ -1,4 +1,5 @@
 import pandas as pd
+pd.set_option("display.precision", 8)
 import numpy as np
 from pypfopt.efficient_frontier import EfficientFrontier
 from src.varianceHedge.tools.bt_results import stats
